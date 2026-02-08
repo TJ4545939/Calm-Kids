@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Calm Kids</title>
+  
+<link rel="manifest" href="manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 36px;
+      height: 100vh;
+    }
+
+    .screen {
+      width: 360px;
+      text-align: center;
+      position: relative;
+    }
+
+    h1 { color: #1fa7a7; font-size: 26px; margin-bottom: 10px; }
+
+    button { padding: 12px 18px; font-size: 16px; border-radius: 20px; border: none; cursor: pointer; }
+
+    .stars { font-size: 40px; margin-top: 4px; }
+    .star { color:#cccccc; margin:2px; transition: color 0.3s ease; }
+
+    @keyframes flash { 0%,100%{opacity:1}50%{opacity:0.3} }
+    .star.flashing { animation: flash 0.6s infinite; cursor: pointer; }
+
+    .feelings { display:flex; flex-direction:column; gap:12px; }
+    .feeling { background:white; color:#1fa7a7; border:2px solid #1fa7a7; padding:12px; border-radius:18px; }
+
+    textarea, input[type="text"]{ width:100%; padding:14px 12px; font-size:16px; border:2px solid #1fa7a7; border-radius:8px; box-sizing:border-box; }
+    input[type="text"]{ min-height:48px; }
+    textarea{ min-height:140px; resize:vertical; }
+    #reasonText{ min-height:200px; }
+    .submit-button{ background:#1fa7a7; color:white; padding:10px 20px; margin-top:12px; border-radius:18px; }
+
+    @keyframes breathe { 0%{transform:scale(1)}50%{transform:scale(1.25)}100%{transform:scale(1)} }
+    .breathing-circle{ width:130px; height:130px; background:#1fa7a7; border-radius:50%; margin:20px auto; animation:breathe 6s infinite; }
+    @keyframes breathe-text-flash{ 0%,100%{opacity:1}50%{opacity:0.3} }
+    .breathing-text.flash{ animation:breathe-text-flash 0.9s infinite; }
+
+    @keyframes confetti { 0%{transform:translateY(0) rotateZ(0); opacity:1} 100%{transform:translateY(300px) rotateZ(360deg); opacity:0} }
+    .confetti{ position:fixed; width:10px; height:10px; animation:confetti 3s ease-out forwards; pointer-events:none }
+    @keyframes celebration-float{
+      0%{ transform:translateY(0) scale(0.9); opacity:0; }
+      15%{ opacity:1; }
+      100%{ transform:translateY(-220px) scale(1.1); opacity:0; }
+    }
+    .celebration-emoji{ position:fixed; font-size:28px; animation:celebration-float 2.4s ease-out forwards; pointer-events:none; }
+    @keyframes coin-fall{
+      0%{ transform:translateY(-40px) rotateZ(0deg) scale(0.9); opacity:0; }
+      15%{ opacity:1; }
+      100%{ transform:translateY(420px) rotateZ(220deg) scale(1.05); opacity:0; }
+    }
+    .coin-drop{ position:fixed; font-size:22px; animation:coin-fall 2.6s ease-in forwards; pointer-events:none; filter:drop-shadow(0 0 6px rgba(255,215,0,0.45)); }
+    @keyframes celebration-burst{
+      0%{ transform:translate(-50%, -50%) scale(0.2); opacity:0; }
+      20%{ opacity:0.35; }
+      100%{ transform:translate(-50%, -50%) scale(2.4); opacity:0; }
+    }
+    .celebration-burst{ position:fixed; left:50%; top:50%; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(255,215,0,0.55) 0%, rgba(255,105,180,0.25) 45%, rgba(135,206,235,0.0) 70%); animation:celebration-burst 1.1s ease-out forwards; pointer-events:none; z-index:55; }
+    @keyframes badge-pop{
+      0%{ transform:translate(-50%, -50%) scale(0.6); opacity:0; }
+      35%{ transform:translate(-50%, -50%) scale(1.12); opacity:1; }
+      70%{ transform:translate(-50%, -50%) scale(1); opacity:1; }
+      100%{ transform:translate(-50%, -50%) scale(0.95); opacity:0; }
+    }
+    .sticker-badge{ position:fixed; left:50%; top:42%; padding:10px 16px; background:#fff; border:3px solid #ffd24d; color:#1fa7a7; font-weight:800; border-radius:999px; box-shadow:0 6px 14px rgba(0,0,0,0.12); animation:badge-pop 1.4s ease-out forwards; pointer-events:none; z-index:60; }
+    .success-message{ font-size:36px; color:#1fa7a7; margin-top:8px; margin-bottom:12px; text-align:center; }
+    .screen.centered{ display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:260px; }
+
+    .day-section{ margin:4px 0; padding:6px; background:#fbfbfb; border-radius:10px; }
+    .day-title{ color:#1fa7a7; font-size:15px; font-weight:bold; margin-bottom:4px; }
+    .treasure-wrap{ position:relative; width:220px; height:140px; margin:6px auto 12px; border:3px solid #ffd24d; border-radius:16px; background:#fffdf2; box-shadow:0 6px 14px rgba(0,0,0,0.08); }
+    .treasure-chest{ font-size:72px; margin:0; cursor:pointer; position:absolute; left:50%; top:48%; transform:translate(-50%, -50%); }
+    .diamond-points{ position:absolute; left:50%; bottom:10px; transform:translateX(-50%); font-size:16px; color:#6b4f00; font-weight:800; white-space:nowrap; }
+
+    .coins-row{ display:flex; justify-content:center; gap:6px; margin-top:4px; font-size:16px; opacity:0.9; color:#6b4f00; }
+    .coins-row .coin{ filter:drop-shadow(0 0 4px rgba(255,215,0,0.35)); }
+    @keyframes points-glow{ 0%,100%{ text-shadow:0 0 4px rgba(255,215,0,0.45); } 50%{ text-shadow:0 0 12px rgba(255,215,0,0.9); } }
+    .coins-row.glow{ color:#b88000; animation:points-glow 1.6s ease-in-out infinite; }
+
+    .daily-complete{ position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; align-items:center; justify-content:center; z-index:80; }
+    .daily-complete .card{ background:#fff; padding:18px 20px; border-radius:16px; max-width:280px; text-align:center; box-shadow:0 10px 24px rgba(0,0,0,0.2); border:3px solid #ffd24d; }
+    .daily-complete .title{ font-size:20px; color:#1fa7a7; font-weight:800; margin-bottom:8px; }
+    .daily-complete .points{ font-size:18px; color:#b88000; font-weight:800; }
+    @keyframes treasure-glitter{
+      0%{ text-shadow:0 0 0 rgba(255,215,0,0.0), 0 0 0 rgba(135,206,235,0.0); }
+      35%{ text-shadow:0 0 6px rgba(255,215,0,0.7), 0 0 10px rgba(135,206,235,0.5); }
+      70%{ text-shadow:0 0 3px rgba(255,215,0,0.3), 0 0 6px rgba(135,206,235,0.3); }
+      100%{ text-shadow:0 0 0 rgba(255,215,0,0.0), 0 0 0 rgba(135,206,235,0.0); }
+    }
+    .treasure-chest.glitter{ animation:treasure-glitter 1.8s ease-in-out infinite }
+
+    /* Panda */
+    .panda{ position:absolute; left:-100px; top:6px; width:96px; pointer-events:none; z-index:40 }
+    .panda svg{ display:block; width:100%; height:auto; animation:bob 3.6s ease-in-out infinite }
+    .panda .panda-arm{ transform-box:fill-box; transform-origin:30% 32%; animation:wave 1.2s ease-in-out infinite }
+    @keyframes wave{0%{transform:rotate(0)}40%{transform:rotate(-28deg)}65%{transform:rotate(12deg)}100%{transform:rotate(0)}}
+    @keyframes bob{0%{transform:translateY(0)}50%{transform:translateY(-3px)}100%{transform:translateY(0)}}
+
+    /* Coins counter */
+    .coins-counter{ position:fixed; top:12px; right:16px; background:#fff8e1; color:#6b4f00; border:2px solid #ffd24d; padding:8px 12px; border-radius:20px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.08); display:flex; align-items:center; gap:8px; z-index:60 }
+    .coins-counter .coin-icon{ font-size:20px }
+    .coins-counter #coinCount{ font-size:18px }
+
+    .coins-earned{ color:#D4AF37; font-weight:800; margin-top:12px; display:block; font-size:22px; text-align:center; }
+  </style>
+</head>
+
+<body>
+
+  <div class="coins-counter" aria-hidden="false" title="Coins">
+    <span class="coin-icon">🪙</span>
+    <span id="coinCount">0</span>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div class="screen" id="home">
+    <h1>My Daily Journey</h1>
+    <div class="panda" aria-hidden="true">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Calm waving panda">
+        <defs>
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.12"/>
+          </filter>
+        </defs>
+        <g filter="url(#shadow)">
+          <ellipse cx="60" cy="86" rx="36" ry="20" fill="#ffffff" stroke="#000" stroke-width="2" />
+          <circle cx="60" cy="48" r="28" fill="#ffffff" stroke="#000" stroke-width="2" />
+          <circle cx="42" cy="28" r="8" fill="#000" />
+          <circle cx="78" cy="28" r="8" fill="#000" />
+          <ellipse cx="50" cy="48" rx="8" ry="11" fill="#000" />
+          <ellipse cx="70" cy="48" rx="8" ry="11" fill="#000" />
+          <circle cx="50" cy="50" r="3" fill="#fff" />
+          <circle cx="70" cy="50" r="3" fill="#fff" />
+          <path d="M58 58 q2 4 6 0" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round" />
+        </g>
+        <g class="panda-arm" transform="translate(0,0)">
+          <path d="M34 58 q-10 4 -8 18 q4 8 14 8 q8 -2 10 -10 q2 -8 -8 -14 q-6 -4 -8 -0z" fill="#ffffff" stroke="#000" stroke-width="2"/>
+        </g>
+        <circle cx="46" cy="58" r="3" fill="#FFCDD2" opacity="0.9" />
+      </svg>
+    </div>
+
+    <div class="day-section">
+      <div class="day-title">Day 1</div>
+      <div class="stars" id="stars">
+        <span class="star flashing" id="firstStar">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+      </div>
+      <div class="coins-row" aria-hidden="true">
+        <span class="coin">🪙</span>
+        <span>100 Zenzy Points</span>
+      </div>
+    </div>
+
+    <div class="day-section">
+      <div class="day-title">Day 2</div>
+      <div class="stars">
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+      </div>
+      <div class="coins-row" aria-hidden="true">
+        <span class="coin">🪙</span>
+        <span>100 Zenzy Points</span>
+      </div>
+    </div>
+
+    <div class="day-section">
+      <div class="day-title">Day 3</div>
+      <div class="stars">
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+      </div>
+      <div class="coins-row" aria-hidden="true">
+        <span class="coin">🪙</span>
+        <span>100 Zenzy Points</span>
+      </div>
+    </div>
+
+    <div class="day-section">
+      <div class="day-title">Day 4</div>
+      <div class="stars">
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+      </div>
+      <div class="coins-row" aria-hidden="true">
+        <span class="coin">🪙</span>
+        <span>100 Zenzy Points</span>
+      </div>
+    </div>
+
+    <div class="day-section">
+      <div class="day-title">Day 5</div>
+      <div class="stars">
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+        <span class="star">★</span>
+      </div>
+      <div class="coins-row" aria-hidden="true">
+        <span class="coin">🪙</span>
+        <span>100 Zenzy Points</span>
+      </div>
+    </div>
+
+    <div class="treasure-wrap" aria-hidden="false">
+      <div class="treasure-chest glitter" role="img" aria-label="Diamond">💎</div>
+      <div class="diamond-points">1000 Zenzy Points</div>
+    </div>
+  </div>
+
+  <div class="daily-complete" id="dailyComplete">
+    <div class="card" role="dialog" aria-live="polite" aria-label="Daily completion">
+      <div class="title">Well done!</div>
+      <div>You've completed today's activities!</div>
+      <div class="points">100 Zenzy points!</div>
+    </div>
+  </div>
+
+  <!-- CHECK-IN SCREEN -->
+  <div class="screen" id="checkin" style="display:none;">
+    <h1>How are you feeling?</h1>
+    <div class="feelings">
+      <button class="feeling">😊 Happy</button>
+      <button class="feeling">😐 Okay</button>
+      <button class="feeling">😔 Sad</button>
+      <button class="feeling">😡 Angry</button>
+      <button class="feeling">😵‍💫 Overwhelmed</button>
+    </div>
+  </div>
+
+  <!-- REASON SCREEN -->
+  <div class="screen" id="reason" style="display:none;">
+    <h1>Why are you feeling like this?</h1>
+    <textarea id="reasonText" placeholder="Type here..."></textarea>
+    <button class="submit-button" id="submitReason">Next</button>
+  </div>
+
+  <!-- SUCCESS SCREEN 1 -->
+  <div class="screen centered" id="success1" style="display:none;">
+    <p class="success-message">Thank you for sharing 💛</p>
+    <p class="coins-earned" id="coinsEarned1">+0</p>
+  </div>
+
+  <!-- MINDFULNESS SCREEN -->
+  <div class="screen" id="mindfulness" style="display:none;">
+    <h1>Mindful Moments</h1>
+    <p class="breathing-text" id="mindfulnessIntro">Take a deep breath</p>
+    <div class="breathing-circle"></div>
+    <p class="breathing-text" id="breathingText">Breathe in</p>
+    <button class="submit-button" id="completeMindfulness">Done</button>
+  </div>
+
+  <!-- SUCCESS SCREEN 2 -->
+  <div class="screen centered" id="success2" style="display:none;">
+    <p class="success-message">Well done! Go you! 🎉</p>
+    <p class="coins-earned" id="coinsEarned2">+0</p>
+  </div>
+
+  <!-- GRATITUDE SCREEN -->
+  <div class="screen" id="gratitude" style="display:none;">
+    <h1>Daily Gratitude Practice</h1>
+    <p style="color: #1fa7a7; margin-bottom: 12px;">What are three things that you are grateful for today?</p>
+    <input type="text" id="gratitude1" placeholder="Thing 1...">
+    <input type="text" id="gratitude2" placeholder="Thing 2..." style="margin-top:10px;">
+    <input type="text" id="gratitude3" placeholder="Thing 3..." style="margin-top:10px;">
+    <button class="submit-button" id="submitGratitude" style="margin-top:12px;">Next</button>
+  </div>
+
+  <!-- SUCCESS SCREEN 3 -->
+  <div class="screen centered" id="success3" style="display:none;">
+    <p class="success-message">Thank you for sharing! You're very lucky 🍀</p>
+    <p class="coins-earned" id="coinsEarned3">+0</p>
+  </div>
+
+  <!-- AMAZING ME SCREEN -->
+  <div class="screen" id="amazingMe" style="display:none;">
+    <h1>Amazing Me!</h1>
+    <p style="color: #1fa7a7; margin-bottom: 12px;">Write three things that you have done well today:</p>
+    <input type="text" id="amazing1" placeholder="Thing 1...">
+    <input type="text" id="amazing2" placeholder="Thing 2..." style="margin-top:10px;">
+    <input type="text" id="amazing3" placeholder="Thing 3..." style="margin-top:10px;">
+    <button class="submit-button" id="submitAmazing" style="margin-top:12px;">Next</button>
+  </div>
+
+  <!-- SUCCESS SCREEN 4 -->
+  <div class="screen centered" id="success4" style="display:none;">
+    <p class="success-message">You're incredible! 💪</p>
+    <p class="coins-earned" id="coinsEarned4">+0</p>
+  </div>
+
+  <!-- GET MOVING SCREEN -->
+  <div class="screen" id="getMoving" style="display:none;">
+    <h1>Get Moving</h1>
+    <p style="color: #1fa7a7; margin-bottom: 12px; font-size: 16px;">Jog on the spot for 60 seconds!</p>
+    <div style="font-size: 48px; color: #1fa7a7; margin: 24px 0; font-weight: bold;" id="timer">60</div>
+    <button class="submit-button" id="startTimer">Start</button>
+    <button class="submit-button" id="completeMoving" style="display:none; margin-left:8px;">Done</button>
+  </div>
+
+  <!-- SUCCESS SCREEN 5 -->
+  <div class="screen centered" id="success5" style="display:none;">
+    <p class="success-message">Amazing effort! You did it! 🏃</p>
+    <p class="coins-earned" id="coinsEarned5">+0</p>
+  </div>
+
+  <!-- PET / COINS SHOP SCREEN -->
+  <div class="screen" id="petShop" style="display:none;">
+    <h1>Take care of your panda</h1>
+    <div style="width:180px;height:180px;margin:8px auto;border-radius:12px;background:#fff;border:2px solid #eee;display:flex;align-items:center;justify-content:center;">
+      <!-- sad panda in a square -->
+      <svg viewBox="0 0 120 120" width="140" height="140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sad panda">
+        <circle cx="60" cy="60" r="48" fill="#fff" stroke="#000" stroke-width="2"/>
+        <circle cx="44" cy="44" r="10" fill="#000"/>
+        <circle cx="76" cy="44" r="10" fill="#000"/>
+        <circle cx="44" cy="46" r="3" fill="#fff"/>
+        <circle cx="76" cy="46" r="3" fill="#fff"/>
+        <path d="M52 74 q8 8 16 0" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="60" cy="92" rx="18" ry="8" fill="#eee"/>
+      </svg>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:240px;margin:10px auto;">
+      <button class="submit-button shop-btn" data-cost="5">Buy food (-5 coins)</button>
+      <button class="submit-button shop-btn" data-cost="5">Give drink (-5 coins)</button>
+      <button class="submit-button shop-btn" data-cost="5">Play (-5 coins)</button>
+    </div>
+    <p id="shopMsg" style="color:#1fa7a7;margin-top:10px;min-height:20px"></p>
+    <button class="submit-button" id="closeShop" style="margin-top:12px;">Back</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const homeScreen = document.getElementById("home");
+      const checkinScreen = document.getElementById("checkin");
+      const reasonScreen = document.getElementById("reason");
+      const success1 = document.getElementById("success1");
+      const mindfulnessScreen = document.getElementById("mindfulness");
+      const success2 = document.getElementById("success2");
+      const gratitudeScreen = document.getElementById("gratitude");
+      const success3 = document.getElementById("success3");
+      const amazingMeScreen = document.getElementById("amazingMe");
+      const success4 = document.getElementById("success4");
+      const getMovingScreen = document.getElementById("getMoving");
+      const success5 = document.getElementById("success5");
+      const starElements = document.querySelectorAll(".star");
+      const firstStar = document.getElementById("firstStar");
+      const feelings = document.querySelectorAll(".feeling");
+      const submitReason = document.getElementById("submitReason");
+      const completeMindfulness = document.getElementById("completeMindfulness");
+      const breathingText = document.getElementById("breathingText");
+      const mindfulnessIntro = document.getElementById("mindfulnessIntro");
+      const breathingCircle = document.querySelector(".breathing-circle");
+      const submitGratitude = document.getElementById("submitGratitude");
+      const submitAmazing = document.getElementById("submitAmazing");
+      const startTimer = document.getElementById("startTimer");
+      const completeMoving = document.getElementById("completeMoving");
+      const petShop = document.getElementById('petShop');
+      const shopBtns = document.querySelectorAll('.shop-btn');
+      const closeShop = document.getElementById('closeShop');
+      const shopMsg = document.getElementById('shopMsg');
+      const coinsRows = document.querySelectorAll('.coins-row');
+      const dailyComplete = document.getElementById('dailyComplete');
+
+      const mindfulnessActivities = [
+        { type: 'breathing', text: 'Take a deep breath' },
+        { type: 'prompt', text: 'How many yellow things can you see?' },
+        { type: 'prompt', text: 'Can you spot an item of every colour of the rainbow?' },
+        { type: 'breathing', text: 'Square breathing: in 4, hold 4, out 4, hold 4.' }
+      ];
+      let mindfulnessIndex = parseInt(localStorage.getItem('mindfulnessIndex') || '0', 10) || 0;
+
+      // Coins state
+      const coinCountEl = document.getElementById('coinCount');
+      let coins = parseInt(localStorage.getItem('coins') || '0', 10) || 0;
+      coinCountEl.textContent = coins;
+      const coinsCounterEl = document.querySelector('.coins-counter');
+      // clicking the coins counter opens the panda/shop
+      if(coinsCounterEl){ coinsCounterEl.onclick = function(){ homeScreen.style.display='none'; if(petShop) petShop.style.display='block'; }; }
+
+      // Shop interactions use coins now
+      if(closeShop){ closeShop.onclick = function(){ if(petShop) petShop.style.display='none'; homeScreen.style.display='block'; shopMsg.textContent=''; }; }
+
+      if(shopBtns && shopBtns.length){
+        shopBtns.forEach(function(b){ b.onclick = function(){ const cost = parseInt(b.dataset.cost||'0',10); if(coins>=cost){ coins -= cost; localStorage.setItem('coins', coins); if(coinCountEl) coinCountEl.textContent = coins; shopMsg.textContent = `You used ${cost} coins!`; setTimeout(()=>shopMsg.textContent='',1800); } else { shopMsg.textContent = 'Not enough coins'; setTimeout(()=>shopMsg.textContent='',1500); } }; });
+      }
+
+      function showEarned(successEl, amount){
+        const el = successEl.querySelector('.coins-earned');
+        if(el){ el.textContent = `+${amount} coins`; el.style.display = 'block'; }
+      }
+
+      // play a short reward sound (WebAudio) when coins are awarded
+      function playRewardSound(){
+        try{
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if(!AudioCtx) return;
+          const ctx = new AudioCtx();
+          const now = ctx.currentTime;
+          const g = ctx.createGain();
+          g.connect(ctx.destination);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.16, now + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+
+          // Drum hit
+          const drum = ctx.createOscillator();
+          const drumGain = ctx.createGain();
+          drum.type = 'sine';
+          drum.frequency.setValueAtTime(130, now);
+          drum.frequency.exponentialRampToValueAtTime(70, now + 0.14);
+          drumGain.gain.setValueAtTime(0.9, now);
+          drumGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+          drum.connect(drumGain);
+          drumGain.connect(g);
+          drum.start(now);
+          drum.stop(now + 0.2);
+
+          // Cheer (short filtered noise burst)
+          const bufferSize = ctx.sampleRate * 0.3;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for(let i = 0; i < bufferSize; i++){ data[i] = (Math.random() * 2 - 1) * 0.6; }
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1200, now + 0.02);
+          filter.Q.setValueAtTime(0.7, now + 0.02);
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.0, now);
+          noiseGain.gain.linearRampToValueAtTime(0.18, now + 0.03);
+          noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(g);
+          noise.start(now + 0.02);
+          noise.stop(now + 0.34);
+
+          // Bright sparkle tones
+          const notes = [659.25, 783.99, 987.77, 1318.5];
+          let t = now + 0.06;
+          for(let i = 0; i < notes.length; i++){
+            const o = ctx.createOscillator();
+            const og = ctx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(notes[i], t);
+            og.gain.setValueAtTime(0.0001, t);
+            og.gain.linearRampToValueAtTime(0.18, t + 0.02);
+            og.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+            o.connect(og);
+            og.connect(g);
+            o.start(t);
+            o.stop(t + 0.18);
+            t += 0.1;
+          }
+
+          setTimeout(()=>{ try{ if(ctx && ctx.close) ctx.close(); }catch(e){} }, 1200);
+        }catch(e){}
+      }
+
+      function awardCoins(amount, successEl){
+        coins += amount;
+        localStorage.setItem('coins', coins);
+        if(coinCountEl) coinCountEl.textContent = coins;
+        if(successEl) showEarned(successEl, amount);
+        updateCoinGlow();
+        // short vibration to acknowledge coin reward on supported devices
+        try{ if(navigator && navigator.vibrate) navigator.vibrate(180); }catch(e){}
+        // play reward sound
+        playRewardSound();
+      }
+      function updateCoinGlow(){
+        const starsDone = document.querySelectorAll('.star.completed').length === 5;
+        if(coinsRows && coinsRows.length){
+          coinsRows.forEach(function(row){ row.classList.toggle('glow', starsDone); });
+        }
+      }
+
+      function showDailyComplete(){
+        if(!dailyComplete) return;
+        dailyComplete.style.display = 'flex';
+        setTimeout(function(){ dailyComplete.style.display = 'none'; }, 2200);
+      }
+
+      // confetti
+      function createConfetti(layers) {
+        const layerCount = layers || 1;
+        // vibrate on supported devices when confetti is created
+        try{ if(navigator && navigator.vibrate) navigator.vibrate([120,40,120]); }catch(e){}
+        for (let layer = 0; layer < layerCount; layer++) {
+          for (let i = 0; i < 120; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * window.innerWidth + 'px';
+            c.style.top = '0px';
+            // vary size and color for a richer effect
+            c.style.width = (6 + Math.random()*12) + 'px';
+            c.style.height = c.style.width;
+            c.style.backgroundColor = ['#1fa7a7','#FFD700','#FF69B4','#87CEEB','#FFA500','#ADFF2F'][Math.floor(Math.random()*6)];
+            c.style.opacity = (0.75 + Math.random()*0.25).toString();
+            c.style.animationDuration = (2.4 + Math.random()*1.6) + 's';
+            c.style.animationDelay = (layer * 0.25) + 's';
+            document.body.appendChild(c);
+            setTimeout(()=>c.remove(), 3800);
+          }
+        }
+      }
+
+      function createEmojiBurst(){
+        const emojis = ['🎉','✨','⭐','💛','🪙'];
+        for(let i = 0; i < 18; i++){
+          const e = document.createElement('div');
+          e.className = 'celebration-emoji';
+          e.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+          e.style.left = (window.innerWidth * 0.2 + Math.random() * window.innerWidth * 0.6) + 'px';
+          e.style.top = (window.innerHeight * 0.55 + Math.random() * window.innerHeight * 0.2) + 'px';
+          e.style.animationDelay = (Math.random() * 0.4) + 's';
+          document.body.appendChild(e);
+          setTimeout(()=>e.remove(), 2600);
+        }
+      }
+
+      function createCoinShower(){
+        const count = 48;
+        for(let i = 0; i < count; i++){
+          const c = document.createElement('div');
+          c.className = 'coin-drop';
+          c.textContent = '🪙';
+          c.style.left = (window.innerWidth * 0.15 + Math.random() * window.innerWidth * 0.7) + 'px';
+          c.style.top = (Math.random() * 40 - 60) + 'px';
+          c.style.animationDelay = (Math.random() * 0.35) + 's';
+          c.style.animationDuration = (2.2 + Math.random() * 0.8) + 's';
+          document.body.appendChild(c);
+          setTimeout(()=>c.remove(), 3200);
+        }
+      }
+
+      function createBackgroundBurst(){
+        const b = document.createElement('div');
+        b.className = 'celebration-burst';
+        document.body.appendChild(b);
+        setTimeout(()=>b.remove(), 1300);
+      }
+
+      function createStickerBadge(){
+        const messages = ['Awesome!', 'Great job!', 'You did it!', 'Super star!', 'High five!'];
+        const b = document.createElement('div');
+        b.className = 'sticker-badge';
+        b.textContent = messages[Math.floor(Math.random()*messages.length)];
+        document.body.appendChild(b);
+        setTimeout(()=>b.remove(), 1500);
+      }
+
+      function createCelebration(){
+        createConfetti(2);
+        createBackgroundBurst();
+        createCoinShower();
+        createEmojiBurst();
+        createStickerBadge();
+      }
+
+      // First star -> checkin
+      firstStar.onclick = function() {
+        homeScreen.style.display = 'none';
+        checkinScreen.style.display = 'block';
+      };
+
+      // feelings -> reason
+      feelings.forEach(function(btn){ btn.onclick = function(){ checkinScreen.style.display='none'; reasonScreen.style.display='block'; }; });
+
+      // submit reason
+      submitReason.onclick = function(){
+        reasonScreen.style.display='none';
+        success1.style.display='block';
+        awardCoins(10, success1);
+        createCelebration();
+        setTimeout(function(){
+          success1.style.display='none';
+          homeScreen.style.display='block';
+          // mark first star
+          starElements[0].style.color = '#1fa7a7'; starElements[0].classList.remove('flashing'); starElements[0].classList.add('completed'); updateCoinGlow();
+          // make second star flash
+          starElements[1].classList.add('flashing');
+        }, 2500);
+      };
+
+      let breathingTimer = null;
+      function startBreathingCycle(){
+        stopBreathingCycle();
+        if(!breathingText) return;
+        const cycleMs = 6000;
+        const half = cycleMs / 2;
+        const run = function(){
+          breathingText.textContent = 'Breathe in';
+          breathingText.classList.add('flash');
+          setTimeout(function(){
+            breathingText.textContent = 'Breathe out';
+            breathingText.classList.remove('flash');
+          }, half);
+        };
+        run();
+        breathingTimer = setInterval(run, cycleMs);
+      }
+
+      function stopBreathingCycle(){
+        if(breathingTimer){ clearInterval(breathingTimer); breathingTimer = null; }
+      }
+
+      function setMindfulnessActivity(){
+        const activity = mindfulnessActivities[mindfulnessIndex % mindfulnessActivities.length];
+        mindfulnessIndex = (mindfulnessIndex + 1) % mindfulnessActivities.length;
+        localStorage.setItem('mindfulnessIndex', mindfulnessIndex);
+        if(mindfulnessIntro) mindfulnessIntro.textContent = activity.text;
+
+        if(activity.type === 'prompt'){
+          if(breathingCircle) breathingCircle.style.display = 'none';
+          if(breathingText){ breathingText.style.display = 'none'; breathingText.classList.remove('flash'); }
+          stopBreathingCycle();
+        } else {
+          if(breathingCircle) breathingCircle.style.display = 'block';
+          if(breathingText){ breathingText.style.display = 'block'; breathingText.textContent = 'Breathe in'; }
+          startBreathingCycle();
+        }
+      }
+
+      // second star -> mindfulness
+      const secondStar = starElements[1];
+      secondStar.onclick = function(){ homeScreen.style.display='none'; mindfulnessScreen.style.display='block'; setMindfulnessActivity(); };
+
+      // complete mindfulness
+      completeMindfulness && (completeMindfulness.onclick = function(){
+        stopBreathingCycle();
+        mindfulnessScreen.style.display='none'; success2.style.display='block'; awardCoins(10, success2); createCelebration();
+        setTimeout(function(){ success2.style.display='none'; homeScreen.style.display='block'; starElements[1].style.color='#1fa7a7'; starElements[1].classList.remove('flashing'); starElements[1].classList.add('completed'); updateCoinGlow(); starElements[2].classList.add('flashing'); }, 2500);
+      });
+
+      // third star -> gratitude
+      const thirdStar = starElements[2];
+      thirdStar.onclick = function(){ homeScreen.style.display='none'; gratitudeScreen.style.display='block'; };
+
+      submitGratitude && (submitGratitude.onclick = function(){
+        gratitudeScreen.style.display = 'none'; success3.style.display = 'block';
+        document.getElementById('gratitude1').value=''; document.getElementById('gratitude2').value=''; document.getElementById('gratitude3').value='';
+        awardCoins(10, success3);
+        createCelebration();
+        setTimeout(function(){ success3.style.display='none'; homeScreen.style.display='block'; starElements[2].style.color='#1fa7a7'; starElements[2].classList.remove('flashing'); starElements[2].classList.add('completed'); updateCoinGlow(); starElements[3].classList.add('flashing'); }, 2500);
+      });
+
+      // fourth star -> amazing me
+      const fourthStar = starElements[3];
+      fourthStar.onclick = function(){ homeScreen.style.display='none'; amazingMeScreen.style.display='block'; };
+
+      submitAmazing && (submitAmazing.onclick = function(){ amazingMeScreen.style.display='none'; success4.style.display='block'; document.getElementById('amazing1').value=''; document.getElementById('amazing2').value=''; document.getElementById('amazing3').value=''; awardCoins(10, success4); createCelebration(); setTimeout(function(){ success4.style.display='none'; homeScreen.style.display='block'; starElements[3].style.color='#1fa7a7'; starElements[3].classList.remove('flashing'); starElements[3].classList.add('completed'); updateCoinGlow(); starElements[4].classList.add('flashing'); }, 2500); });
+
+      // fifth star -> get moving
+      const fifthStar = starElements[4];
+      fifthStar.onclick = function(){ homeScreen.style.display='none'; getMovingScreen.style.display='block'; };
+
+      // timer
+      startTimer && (startTimer.onclick = function(){ startTimer.style.display='none'; completeMoving.style.display='inline-block'; let timeLeft=60; const timerDisplay=document.getElementById('timer'); const iv=setInterval(function(){ timeLeft--; timerDisplay.textContent=timeLeft; if(timeLeft<=0){ clearInterval(iv); completeMoving.style.display='none'; getMovingScreen.style.display='none'; success5.style.display='block'; awardCoins(10, success5); createCelebration(); setTimeout(function(){ success5.style.display='none'; homeScreen.style.display='block'; timerDisplay.textContent='60'; startTimer.style.display='inline-block'; completeMoving.style.display='none'; starElements[4].style.color='#1fa7a7'; starElements[4].classList.remove('flashing'); starElements[4].classList.add('completed'); updateCoinGlow(); showDailyComplete(); },2500); } },1000); });
+
+      completeMoving && (completeMoving.onclick = function(){ const timerDisplay=document.getElementById('timer'); getMovingScreen.style.display='none'; success5.style.display='block'; awardCoins(10, success5); createCelebration(); setTimeout(function(){ success5.style.display='none'; homeScreen.style.display='block'; timerDisplay.textContent='60'; startTimer.style.display='inline-block'; completeMoving.style.display='none'; starElements[4].style.color='#1fa7a7'; starElements[4].classList.remove('flashing'); starElements[4].classList.add('completed'); updateCoinGlow(); showDailyComplete(); },2500); });
+    });
+  </script>
+
+</body>
+</html>
